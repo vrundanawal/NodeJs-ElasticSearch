@@ -1,0 +1,14 @@
+{
+  "name": "node-elasticsearchapp",
+  "version": "1.0.0",
+  "description": "Creating Restful Api with Node js",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Vrunda Nawal",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

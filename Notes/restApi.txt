@@ -1,0 +1,11 @@
+Index(PUT/POST) API
+It helps to add or update the JSON document in an index when a request is made to that respective index with specific mapping.
+
+GET API
+API helps to extract type JSON object by performing a get request for a particular document.
+
+DELETE API
+You can delete a particular index, mapping or a document by sending an HTTP DELETE rewquest to Elasticsearch.
+
+UPDATE API
+Update docs/data put into elastic search

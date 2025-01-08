@@ -1,0 +1,50 @@
+Logstash is a tool based on the filter/pipes pattern for gathering, processing and gnerating the logs or events. It helps in centralizing and making real time analysis of logs and events from different sources.
+
+General Features
+- Logstash can collect data from different sources and send multiple destination.
+- Logstash can also handle http request and response.
+- Logstash can handle all types of logging data like Apache logs, Windows Event logs, Data over Network Protocols, Data from Standard Input and many more.
+- Logstash provides a variety of filters, which helpd the user to find more meaning in the data by parsing and transforming it.
+- Logstash can also be used for handling sensors data in internet of things.
+
+Key Concepts
+1) Event Object 
+It is the main object in Logstash, which encapsulates the data flow in the Logstash pipeline. Logstash uses this object to store the input data and add extra fields created during the filter stage. Logstash offers an Event API to developers to manipulate events.
+2) pipeline
+It comprises of data flow stages in Logstash from input to output. The input data is entered in the pipeline and is processed in the form of an event. Then sends to an output destination in the user or end system's desirable format.
+3) Input
+This is the first stage in the Logstash pipeline, which is used to get the data in Logstash for further processing. Logstash offers various plugins to get data from different platform. Some of the most commonly used plugins are - File, Syslog, Redis and Beats
+4) Filter
+This is the middle stage of Logstash, where the atual processing of events take place. A developer can use predefined Regex Pattern by Logstash to create sequences for differentiating between the fields in the events and criteria for accepted input events.
+5) Output
+This is the last stage in the Logstash pipeline, where the output events can be formatted into the structure required by destination system. Lastly, it sends the output event after complete processing to the destination by using pluggings. Some of the most commonly used pligins are - Elasticsarch, File, Graphite, Statsd etc.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

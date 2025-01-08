@@ -1,0 +1,56 @@
+1) Elasticsearch is a distributed, open source search and analytics engine for all types ofdata, including textual, numerical, geospatial, structured and unstructured data.
+
+Elasticsearch is a database that stores, retrieves and manages document-oriented and semi structured data. (store in Json format)
+
+2) Why use Elasticsearch?
+Products that involve e-commerce and search engines with huge database are facing issues, including product information retreval taking too long. This leads to poor user experience and in turn turns off potential customers.
+Lag in search is attributed to the relational database used for the product design, where the data is scattered among multiple tables - and the successful retrieval of meaningful user information requires fetching the data from these tables.
+The relational database works comparatively slowly when it comes to huge data and fetching search resullts through database queries.
+
+
+3) What is Es used for?
+ - application search
+ - Website search
+ - Logging and log analytics
+ - Geospatial data analysis and visulalization
+ - Business analytics
+
+ 4) How does elastic search work?
+ - Raw data flows into Elasticsearch from a variety of sources, including logs, system metrics and web applications.
+ - Data ingestion is the process by which this raw data is parsed, normalizes and enriched before it is indexed in Elasticsearch.
+
+ From kibana, users can create powerful visulalization of their data, share dashboards and manage the Elastic Stack.
+
+ 
+ 5) Basic Concepts of Elastic search
+ Cluster - A Cluster is a collection of one or more servers that together hold entire data and give federated indexing and search capabilities across all servers. For relational database, the node is DB instance. There can be N nodes with the same cluster name.
+ Near-Real-Time (NRT) - Elasticsearch is a near-real-time search platform. There is a slight from that time you index a document until the time it becames searchable.
+ index - The index is a collection of documents that have similar characteristics.
+Node - A node is a single server that holds some data and participates on the cluste's indexing and querying. A node can be configured to join a specific cluster by the particular cluster name. A single cluster can have as many nodes as we want. A node is simply one Elasticsearch instance.
+Shards - A shard is a subset of document of an index. an index can be divided into many shards.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
