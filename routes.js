@@ -240,24 +240,28 @@ router.put('/workouts/:id', async (req, res) => {
 
 //delete a workout
 //DELETE request
-router.delete('/workouts/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const workout = workouts.find((workout) => workout.id === id);
+router.delete('/workouts/:id', async (req, res) => {
+  const { id } = req.params;
 
-  if (!workout) {
-    return res.status(404).send({
+  try {
+    const result = await client.delete({
+      index: 'workouts',
+      id: id,
+    });
+
+    return res.status(200).send({
+      success: 'true',
+      message: 'Workout deleted successfully',
+      result,
+    });
+  } catch (err) {
+    console.error('Error deleting workout:', err);
+    return res.status(500).send({
       success: 'false',
-      message: `workout does not exist for id ${id}`,
+      message: 'Failed to delete workout',
+      error: err.message,
     });
   }
-
-  const index = workouts.indexOf(workout);
-  workouts.splice(index, 1);
-
-  return res.status(200).send({
-    success: 'true',
-    message: `workout ${req.params.id} deleted successfully`,
-  });
 });
 
 module.exports = router;
