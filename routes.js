@@ -53,15 +53,6 @@ router.use((req, res, next) => {
   console.log('Time:', Date.now());
   console.log('Request Type:', req.method);
   console.log('Request URL:', req.url);
-  //   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-  //   res.setHeader(
-  //     'Access-Control-Allow-Headers',
-  //     'X-Requested-With,content-type'
-  //   );
-  //   res.setHeader(
-  //     'Access-Control-Allow-Methods',
-  //     'GET, POST, OPTIONS, PUT, PATCH, DELETE'
-  //   );
   next();
 });
 
@@ -84,6 +75,7 @@ workouts.forEach((workout) => {
   );
 });
 //get all workouts
+//Get all workouts from Elasticsearch
 router.get('/workouts', (req, res) => {
   return res.status(200).send({
     success: 'true',
@@ -91,6 +83,8 @@ router.get('/workouts', (req, res) => {
     workouts: workouts,
   });
 });
+
+// Get all workouts from Elasticsearch
 
 //get a single workout
 router.get('/workouts/:id', (req, res) => {
@@ -113,64 +107,97 @@ router.get('/workouts/:id', (req, res) => {
 
 //create a workout
 //POST request
-router.post('/workouts', (req, res) => {
-  if (!req.body.id) {
+// router.post('/workouts', (req, res) => {
+//   if (!req.body.id) {
+//     return res.status(400).send({
+//       success: 'false',
+//       message: 'ID is required',
+//     });
+//   } else if (!req.body.type) {
+//     return res.status(400).send({
+//       success: 'false',
+//       message: 'type is required',
+//     });
+//   } else if (!req.body.duration) {
+//     return res.status(400).send({
+//       success: 'false',
+//       message: 'duration is required',
+//     });
+//   } else if (!req.body.date) {
+//     return res.status(400).send({
+//       success: 'false',
+//       message: 'date is required',
+//     });
+//   }
+
+//   const workout = {
+//     id: workouts.length + 1,
+//     type: req.body.type,
+//     duration: req.body.duration,
+//     date: req.body.date,
+//   };
+
+//   workouts.push(workout);
+//   return res.status(201).send({
+//     success: 'true',
+//     message: 'workout added successfully',
+//     workout,
+//   });
+
+//   //   client.index(
+//   //     {
+//   //       index: 'workouts',
+//   //       type: 'mytype',
+//   //       id: workout.id,
+//   //       body: workout,
+//   //     },
+//   //     function (err, resp, status) {
+//   //       if (err) {
+//   //         console.log(err);
+//   //       } else {
+//   //         return res.status(201).send({
+//   //           success: 'true',
+//   //           message: 'workout added successfully',
+//   //           workout,
+//   //         });
+//   //       }
+//   //     }
+//   //   );
+// });
+router.post('/workouts', async (req, res) => {
+  const { id, type, duration } = req.body;
+
+  if (!id || !type || !duration) {
     return res.status(400).send({
       success: 'false',
-      message: 'ID is required',
-    });
-  } else if (!req.body.type) {
-    return res.status(400).send({
-      success: 'false',
-      message: 'type is required',
-    });
-  } else if (!req.body.duration) {
-    return res.status(400).send({
-      success: 'false',
-      message: 'duration is required',
-    });
-  } else if (!req.body.date) {
-    return res.status(400).send({
-      success: 'false',
-      message: 'date is required',
+      message: 'All fields are required: id, name, duration',
     });
   }
 
-  const workout = {
-    id: workouts.length + 1,
-    type: req.body.type,
-    duration: req.body.duration,
-    date: req.body.date,
-  };
+  try {
+    const result = await client.index({
+      index: 'workouts',
+      body: {
+        id,
+        type,
+        duration,
+      },
+    });
 
-  workouts.push(workout);
-  return res.status(201).send({
-    success: 'true',
-    message: 'workout added successfully',
-    workout,
-  });
-
-  //   client.index(
-  //     {
-  //       index: 'workouts',
-  //       type: 'mytype',
-  //       id: workout.id,
-  //       body: workout,
-  //     },
-  //     function (err, resp, status) {
-  //       if (err) {
-  //         console.log(err);
-  //       } else {
-  //         return res.status(201).send({
-  //           success: 'true',
-  //           message: 'workout added successfully',
-  //           workout,
-  //         });
-  //       }
-  //     }
-  //   );
+    return res.status(201).send({
+      success: 'true',
+      message: 'Workout added successfully',
+      result,
+    });
+  } catch (err) {
+    console.error('Error adding workout:', err);
+    return res.status(500).send({
+      success: 'false',
+      message: 'Failed to add workout',
+      error: err.message,
+    });
+  }
 });
-
 //update a workout
 //PUT request
 router.put('/workouts/:id', (req, res) => {
