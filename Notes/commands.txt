@@ -1,0 +1,4 @@
+//reference link
+https://www.elastic.co/guide/en/cloud/current/ec-getting-started-node-js.html
+
+npm install elasticsearch

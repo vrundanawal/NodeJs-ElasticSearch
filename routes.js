@@ -1,5 +1,44 @@
 const express = require('express');
 const router = express.Router();
+const { Client } = require('@elastic/elasticsearch');
+const client = new Client({ node: 'http://localhost:9200' });
+client.ping({}, (err) => {
+  if (err) {
+    console.error('Elasticsearch cluster is down!', err);
+  } else {
+    console.log('Elasticsearch cluster is up and running!');
+  }
+});
+//index a document
+client.index(
+  {
+    index: 'myindex',
+    body: {
+      title: 'My Document',
+      content: 'This is my document',
+    },
+  },
+  (err, result) => {
+    if (err) console.error(err);
+    else console.log(result);
+  }
+);
+
+// Search for documents
+client.search(
+  {
+    index: 'myindex',
+    body: {
+      query: {
+        match: { title: 'My Document' },
+      },
+    },
+  },
+  (err, result) => {
+    if (err) console.error(err);
+    else console.log(result.body.hits.hits);
+  }
+);
 
 const workouts = [
   { id: 1, type: 'weights', duration: 30, date: '2020-01-01' },
@@ -14,9 +53,36 @@ router.use((req, res, next) => {
   console.log('Time:', Date.now());
   console.log('Request Type:', req.method);
   console.log('Request URL:', req.url);
+  //   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  //   res.setHeader(
+  //     'Access-Control-Allow-Headers',
+  //     'X-Requested-With,content-type'
+  //   );
+  //   res.setHeader(
+  //     'Access-Control-Allow-Methods',
+  //     'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+  //   );
   next();
 });
 
+router.get('/', (req, res) => {
+  res.send({ message: 'Welcome to the API!' });
+});
+
+// Index workouts
+workouts.forEach((workout) => {
+  client.index(
+    {
+      index: 'workouts',
+      id: workout.id,
+      body: workout,
+    },
+    (err, result) => {
+      if (err) console.error(err);
+      else console.log(`Indexed workout ${workout.id}`);
+    }
+  );
+});
 //get all workouts
 router.get('/workouts', (req, res) => {
   return res.status(200).send({
@@ -83,6 +149,26 @@ router.post('/workouts', (req, res) => {
     message: 'workout added successfully',
     workout,
   });
+
+  //   client.index(
+  //     {
+  //       index: 'workouts',
+  //       type: 'mytype',
+  //       id: workout.id,
+  //       body: workout,
+  //     },
+  //     function (err, resp, status) {
+  //       if (err) {
+  //         console.log(err);
+  //       } else {
+  //         return res.status(201).send({
+  //           success: 'true',
+  //           message: 'workout added successfully',
+  //           workout,
+  //         });
+  //       }
+  //     }
+  //   );
 });
 
 //update a workout
