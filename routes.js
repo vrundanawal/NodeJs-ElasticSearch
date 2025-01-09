@@ -200,32 +200,42 @@ router.post('/workouts', async (req, res) => {
 });
 //update a workout
 //PUT request
-router.put('/workouts/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const workout = workouts.find((workout) => workout.id === id);
+router.put('/workouts/:id', async (req, res) => {
+  const { id } = req.params;
+  const { type, duration } = req.body;
 
-  if (!workout) {
-    return res.status(404).send({
+  if (!type || !duration || !id) {
+    return res.status(400).send({
       success: 'false',
-      message: `workout does not exist for id ${id}`,
+      message: 'All fields are required: name, duration, calories',
     });
   }
 
-  const updatedWorkout = {
-    id: workout.id,
-    type: req.body.type || workout.type,
-    duration: req.body.duration || workout.duration,
-    date: req.body.date || workout.date,
-  };
+  try {
+    const result = await client.update({
+      index: 'workouts',
+      id: id,
+      body: {
+        doc: {
+          type,
+          duration,
+        },
+      },
+    });
 
-  const index = workouts.indexOf(workout);
-  workouts[index] = updatedWorkout;
-
-  return res.status(200).send({
-    success: 'true',
-    message: `workout ${req.params.id} updated successfully`,
-    updatedWorkout,
-  });
+    return res.status(200).send({
+      success: 'true',
+      message: 'Workout updated successfully',
+      result,
+    });
+  } catch (err) {
+    console.error('Error updating workout:', err);
+    return res.status(500).send({
+      success: 'false',
+      message: 'Failed to update workout',
+      error: err.message,
+    });
+  }
 });
 
 //delete a workout
