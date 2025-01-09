@@ -15,7 +15,7 @@ client.index(
     index: 'myindex',
     body: {
       title: 'My Document',
-      content: 'This is my document',
+      content: 'This is my old document',
     },
   },
   (err, result) => {
@@ -41,11 +41,11 @@ client.search(
 );
 
 const workouts = [
-  { id: 1, type: 'weights', duration: 30, date: '2020-01-01' },
-  { id: 2, type: 'cardio', duration: 40, date: '2021-01-02' },
-  { id: 3, type: 'weights', duration: 45, date: '2022-01-03' },
-  { id: 4, type: 'cardio', duration: 20, date: '2023-01-04' },
-  { id: 5, type: 'weights', duration: 35, date: '2024-01-05' },
+  { id: 1, type: 'weights - 1', duration: 30, date: '2020-01-01' },
+  { id: 2, type: 'cardio - 2', duration: 40, date: '2021-01-02' },
+  { id: 3, type: 'weights - 3', duration: 45, date: '2022-01-03' },
+  { id: 4, type: 'cardio - 4', duration: 20, date: '2023-01-04' },
+  { id: 5, type: 'weights - 5', duration: 35, date: '2024-01-05' },
 ];
 
 router.use((req, res, next) => {
@@ -60,7 +60,7 @@ router.get('/', (req, res) => {
   res.send({ message: 'Welcome to the API!' });
 });
 
-// Index workouts
+// Index workouts into elastic search
 workouts.forEach((workout) => {
   client.index(
     {
@@ -74,18 +74,43 @@ workouts.forEach((workout) => {
     }
   );
 });
-//get all workouts
-//Get all workouts from Elasticsearch
-router.get('/workouts', (req, res) => {
-  return res.status(200).send({
-    success: 'true',
-    message: 'Get all workouts',
-    workouts: workouts,
-  });
-});
 
 // Get all workouts from Elasticsearch
+router.get('/workouts', async (req, res) => {
+  try {
+    const result = await client.search({
+      index: 'workouts',
+      body: {
+        query: {
+          match_all: {},
+        },
+      },
+      size: 10000, // Adjust the size as needed
+    });
 
+    if (result.hits && result.hits.hits) {
+      const workouts = result.hits.hits.map((hit) => hit._source);
+      return res.status(200).send({
+        success: 'true',
+        message: 'Get all workouts',
+        workouts: workouts,
+      });
+    } else {
+      return res.status(500).send({
+        success: 'false',
+        message: 'Failed to get workouts',
+        error: 'Unexpected response structure',
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching workouts:', err);
+    return res.status(500).send({
+      success: 'false',
+      message: 'Failed to get workouts',
+      error: err.message,
+    });
+  }
+});
 //get a single workout
 router.get('/workouts/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
