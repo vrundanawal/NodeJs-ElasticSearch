@@ -2,50 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { Client } = require('@elastic/elasticsearch');
 const client = new Client({ node: 'http://localhost:9200' });
-client.ping({}, (err) => {
-  if (err) {
-    console.error('Elasticsearch cluster is down!', err);
-  } else {
-    console.log('Elasticsearch cluster is up and running!');
-  }
-});
-//index a document
-client.index(
-  {
-    index: 'myindex',
-    body: {
-      title: 'My Document',
-      content: 'This is my old document',
-    },
-  },
-  (err, result) => {
-    if (err) console.error(err);
-    else console.log(result);
-  }
-);
 
-// Search for documents
-client.search(
-  {
-    index: 'myindex',
-    body: {
-      query: {
-        match: { title: 'My Document' },
-      },
-    },
-  },
-  (err, result) => {
-    if (err) console.error(err);
-    else console.log(result.body.hits.hits);
-  }
-);
-
+//Dummy Workout Data
 const workouts = [
-  { id: 1, type: 'weights - 1', duration: 30, date: '2020-01-01' },
-  { id: 2, type: 'cardio - 2', duration: 40, date: '2021-01-02' },
-  { id: 3, type: 'weights - 3', duration: 45, date: '2022-01-03' },
-  { id: 4, type: 'cardio - 4', duration: 20, date: '2023-01-04' },
-  { id: 5, type: 'weights - 5', duration: 35, date: '2024-01-05' },
+  { id: 1, type: 'weights - 1', duration: 30 },
+  { id: 2, type: 'cardio - 2', duration: 40 },
+  { id: 3, type: 'weights - 3', duration: 45 },
+  { id: 4, type: 'cardio - 4', duration: 20 },
+  { id: 5, type: 'weights - 5', duration: 35 },
 ];
 
 router.use((req, res, next) => {
@@ -112,22 +76,34 @@ router.get('/workouts', async (req, res) => {
   }
 });
 //get a single workout
-router.get('/workouts/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const workout = workouts.find((workout) => workout.id === id);
+router.get('/workouts/:id', async (req, res) => {
+  const id = req.params.id;
 
-  if (!workout) {
-    return res.status(404).send({
+  try {
+    const result = await client.get({
+      index: 'workouts',
+      id: id,
+    });
+
+    return res.status(200).send({
+      success: 'true',
+      message: `Workout retrieved** successfully for id ${id}`,
+      workout: result._source,
+    });
+  } catch (err) {
+    console.error('Error retrieving workout:', err);
+    if (err.meta.statusCode === 404) {
+      return res.status(404).send({
+        success: 'false',
+        message: `Workout does not exist for id ${id}`,
+      });
+    }
+    return res.status(500).send({
       success: 'false',
-      message: `workout does not exist for id ${id}`,
+      message: 'Failed to retrieve workout',
+      error: err.message,
     });
   }
-
-  return res.status(200).send({
-    success: 'true',
-    message: `workout retrieved successfully for id ${id}`,
-    workout,
-  });
 });
 
 //create a workout
@@ -191,27 +167,49 @@ router.get('/workouts/:id', (req, res) => {
 // });
 router.post('/workouts', async (req, res) => {
   const { id, type, duration } = req.body;
+  const workout = req.body;
 
   if (!id || !type || !duration) {
     return res.status(400).send({
       success: 'false',
-      message: 'All fields are required: id, name, duration',
+      message: 'All fields are required: id, type, duration',
+    });
+  }
+
+  // Check if the workout with the given ID already exists in the array
+  const existingWorkout = workouts.find((workout) => workout.id === id);
+  if (existingWorkout) {
+    return res.status(409).send({
+      success: 'false',
+      message: `Workout with id ${id} already exists`,
     });
   }
 
   try {
+    // Check if the workout with the given ID already exists
+    const exists = await client.exists({
+      index: 'workouts',
+      id: workout.id,
+    });
+    console.log(exists + 'exists');
+
+    if (exists.body) {
+      return res.status(409).send({
+        success: 'false',
+        message: `Workout with id ${workout.id} already exists`,
+      });
+    }
     const result = await client.index({
       index: 'workouts',
-      body: {
-        id,
-        type,
-        duration,
-      },
+      body: workout,
+      id: workout.id,
     });
 
+    console.log(`Indexed workout ${typeof workout.id}`);
     return res.status(201).send({
       success: 'true',
       message: 'Workout added successfully',
+      workouts: req.body,
       result,
     });
   } catch (err) {
@@ -232,7 +230,7 @@ router.put('/workouts/:id', async (req, res) => {
   if (!type || !duration || !id) {
     return res.status(400).send({
       success: 'false',
-      message: 'All fields are required: name, duration, calories',
+      message: 'All fields are required: type, duration, ',
     });
   }
 
@@ -251,7 +249,7 @@ router.put('/workouts/:id', async (req, res) => {
     return res.status(200).send({
       success: 'true',
       message: 'Workout updated successfully',
-      result,
+      workouts: req.body,
     });
   } catch (err) {
     console.error('Error updating workout:', err);
