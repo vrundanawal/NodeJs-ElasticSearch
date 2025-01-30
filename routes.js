@@ -105,66 +105,8 @@ router.get('/workouts/:id', async (req, res) => {
     });
   }
 });
-
 //create a workout
 //POST request
-// router.post('/workouts', (req, res) => {
-//   if (!req.body.id) {
-//     return res.status(400).send({
-//       success: 'false',
-//       message: 'ID is required',
-//     });
-//   } else if (!req.body.type) {
-//     return res.status(400).send({
-//       success: 'false',
-//       message: 'type is required',
-//     });
-//   } else if (!req.body.duration) {
-//     return res.status(400).send({
-//       success: 'false',
-//       message: 'duration is required',
-//     });
-//   } else if (!req.body.date) {
-//     return res.status(400).send({
-//       success: 'false',
-//       message: 'date is required',
-//     });
-//   }
-
-//   const workout = {
-//     id: workouts.length + 1,
-//     type: req.body.type,
-//     duration: req.body.duration,
-//     date: req.body.date,
-//   };
-
-//   workouts.push(workout);
-//   return res.status(201).send({
-//     success: 'true',
-//     message: 'workout added successfully',
-//     workout,
-//   });
-
-//   //   client.index(
-//   //     {
-//   //       index: 'workouts',
-//   //       type: 'mytype',
-//   //       id: workout.id,
-//   //       body: workout,
-//   //     },
-//   //     function (err, resp, status) {
-//   //       if (err) {
-//   //         console.log(err);
-//   //       } else {
-//   //         return res.status(201).send({
-//   //           success: 'true',
-//   //           message: 'workout added successfully',
-//   //           workout,
-//   //         });
-//   //       }
-//   //     }
-//   //   );
-// });
 router.post('/workouts', async (req, res) => {
   const { id, type, duration } = req.body;
   const workout = req.body;
@@ -176,42 +118,48 @@ router.post('/workouts', async (req, res) => {
     });
   }
 
-  // Check if the workout with the given ID already exists in the array
-  const existingWorkout = workouts.find((workout) => workout.id === id);
-  if (existingWorkout) {
-    return res.status(409).send({
-      success: 'false',
-      message: `Workout with id ${id} already exists`,
-    });
-  }
+  // Check if the workout with the given ID already exists in the elasticsearch index
+
+  const workouts = await client.search({
+    index: 'workouts',
+    body: {
+      query: {
+        match: {
+          id: id,
+        },
+      },
+    },
+  });
 
   try {
-    // Check if the workout with the given ID already exists
-    const exists = await client.exists({
-      index: 'workouts',
-      id: workout.id,
-    });
-    console.log(exists + 'exists');
-
-    if (exists.body) {
+    if (workouts.hits.total.value > 0) {
       return res.status(409).send({
         success: 'false',
-        message: `Workout with id ${workout.id} already exists`,
+        message: `Workout with id ${id} already exists`,
       });
     }
-    const result = await client.index({
-      index: 'workouts',
-      body: workout,
-      id: workout.id,
-    });
 
-    console.log(`Indexed workout ${typeof workout.id}`);
-    return res.status(201).send({
-      success: 'true',
-      message: 'Workout added successfully',
-      workouts: req.body,
-      result,
-    });
+    return client
+      .index({
+        index: 'workouts',
+        id: id,
+        body: workout,
+      })
+      .then(() => {
+        return res.status(201).send({
+          success: 'true',
+          message: 'Workout added successfully',
+          workout: req.body,
+        });
+      })
+      .catch((err) => {
+        console.error('Error adding workout:', err);
+        return res.status(500).send({
+          success: 'false',
+          message: 'Failed to add workout',
+          error: err.message,
+        });
+      });
   } catch (err) {
     console.error('Error adding workout:', err);
     return res.status(500).send({
